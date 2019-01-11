@@ -1,3 +1,5 @@
-vision/bin
+// Replace "vision" with installed folder if different
+
+vision/bin    // Ignore build directories
 vision/build
-!vision/lib/*
+!vision/lib/* // Force include library jars

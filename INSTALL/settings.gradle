@@ -1,1 +1,2 @@
-include 'vision'
+include 'vision' // Declare folder vision/ as a subproject.
+                 // Replace with name of folder if different
