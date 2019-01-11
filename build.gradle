@@ -1,0 +1,75 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '4.0.3' apply false
+}
+
+mainClassName = 'Main' // Change with your own class and package
+
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'jaci.gradle.EmbeddedTools' // Already used by GradleRIO so already imported
+
+repositories {
+    mavenCentral()
+    flatDir {
+        dirs '/usr/local/frc/java', 'lib' // jar dependencies are kept in lib/
+    }
+}
+
+dependencies {
+    compile 'com.google.code.gson:gson:2.8.5'
+
+    compile name: 'wpiutil'
+    compile name: 'ntcore'
+    compile name: 'cscore'
+    compile name: 'cameraserver'
+    compile name: 'opencv-344'
+}
+
+//wrapper { // This was in the sample build.gradle but it does not seem to work in this context
+    //gradleVersion = '5.0'
+//}
+
+deploy {
+    targets {
+		target('rpi') {
+			directory = '/home/pi'
+			failOnMissing = true // Fail with error if cannot connect
+			timeout = 10 // Will search for pi maximum 10 seconds
+			
+			locations {
+				ssh {
+					address = 'raspberrypi.local' // Change if diffrent hostname or using static IP
+					user = 'pi'                   // The address, username and password are the defaults
+					password = 'raspberry'
+				}
+			}
+		}
+	}
+	
+	artifacts {
+		all {
+			directory = '.'
+			targets << 'rpi'
+			
+			predeploy << { execute '/usr/bin/sudo /bin/mount -o remount,rw / ' }  // Mount filesystem read/write before upload
+			predeploy << { execute '/usr/bin/sudo /bin/mount -o remount,rw /boot ' }
+			postdeploy << { execute '/usr/bin/sudo /bin/mount -o remount,ro / ' } // Mount filesystem read-only after upload
+			postdeploy << { execute '/usr/bin/sudo /bin/mount -o remount,ro /boot ' }
+		}
+		
+		fileArtifact('visionCombinedJar') {
+			file = file("build/libs/${project.name}-all.jar") // Single jar with all dependencies
+			filename = 'uploaded.jar'                         // Rename to upload.jar
+			
+			dependsOn('build') // Build project before deploy
+		}
+		
+		fileArtifact('visionRunCamera') {
+			file = file('runCamera')                              // The default runCamera for uploaded jars
+			
+			postdeploy << { execute '/bin/chmod +x ./runCamera' } // Make executable
+		}
+		
+	}
+}
