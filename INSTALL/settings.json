@@ -1,3 +1,0 @@
-{
-  "files.eol": "\n" // Force Linux LF line endings. Required to make runCamera runnable
-}

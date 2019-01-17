@@ -34,12 +34,12 @@ deploy {
     targets {
 		target('rpi') {
 			directory = '/home/pi'
-			failOnMissing = true // Fail with error if cannot connect
+			failOnMissing = false // Do not fail with error if cannot connect
 			timeout = 10 // Will search for pi maximum 10 seconds
 			
 			locations {
 				ssh {
-					address = 'raspberrypi.local' // Change if diffrent hostname or using static IP
+					address = 'raspberrypi.local' // Change if different hostname or using static IP
 					user = 'pi'                   // The address, username and password are the defaults
 					password = 'raspberry'
 				}
@@ -51,25 +51,48 @@ deploy {
 		all {
 			directory = '.'
 			targets << 'rpi'
-			
-			predeploy << { execute '/usr/bin/sudo /bin/mount -o remount,rw / ' }  // Mount filesystem read/write before upload
-			predeploy << { execute '/usr/bin/sudo /bin/mount -o remount,rw /boot ' }
-			postdeploy << { execute '/usr/bin/sudo /bin/mount -o remount,ro / ' } // Mount filesystem read-only after upload
-			postdeploy << { execute '/usr/bin/sudo /bin/mount -o remount,ro /boot ' }
+		}
+		
+		commandArtifact('visionRW') {
+			command = '/usr/bin/sudo /bin/mount -o remount,rw / ' // Mount filesystem read/write before upload
+			dependsOn('deployVisionRWBootRpi')
+		}
+		
+		commandArtifact('visionRWBoot') {
+			command = '/usr/bin/sudo /bin/mount -o remount,rw /boot '
 		}
 		
 		fileArtifact('visionCombinedJar') {
 			file = file("build/libs/${project.name}-all.jar") // Single jar with all dependencies
 			filename = 'uploaded.jar'                         // Rename to upload.jar
 			
-			dependsOn('build') // Build project before deploy
+			dependsOn('build')                                // Build project before deploy
+			dependsOn('deployVisionRWRpi')
 		}
 		
 		fileArtifact('visionRunCamera') {
-			file = file('runCamera')                              // The default runCamera for uploaded jars
+			file = file('runCamera')                          // The default runCamera for uploaded jars
+			filename = 'runCamera.tmp'                        // Will be renamed later
 			
-			postdeploy << { execute '/bin/chmod +x ./runCamera' } // Make executable
+			dependsOn('deployVisionCombinedJarRpi')           // Run only after jar file is uploaded
+			dependsOn('deployVisionRWRpi')
+			
+			// Prepare runCamera script
+						
+			postdeploy << { execute '/usr/bin/sudo /bin/chown 1000:1000 ./runCamera.tmp'}
+			postdeploy << { execute 'tr -d \'\\r\' < "runCamera.tmp" | tee "runCamera"'}  // Fix newlines: No Windows carriage returns
+			postdeploy << { execute '/usr/bin/sudo /bin/chown 1000:1000 ./runCamera'}
+			postdeploy << { execute '/usr/bin/sudo /bin/chmod +x ./runCamera'}            // Make executable
+			postdeploy << { execute '/usr/bin/sudo /bin/rm -fdr ./runCamera.tmp'}         // Delete temp file
+			
+			// Restart java program
+			
+			postdeploy << { execute '/usr/bin/sudo /usr/bin/killall java'}                // Kill existing code
+			postdeploy << { execute '/usr/bin/sudo /usr/bin/killall -9 java'}
+			postdeploy << { execute '/usr/bin/sudo /bin/bash ./runService'}               // Run new code
+			
+			postdeploy << { execute '/usr/bin/sudo /bin/mount -o remount,ro / ' }         // Mount filesystem read-only after upload for safe shutdown
+			postdeploy << { execute '/usr/bin/sudo /bin/mount -o remount,ro /boot ' }
 		}
-		
 	}
 }

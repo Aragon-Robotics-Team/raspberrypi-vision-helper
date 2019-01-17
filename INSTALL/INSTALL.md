@@ -12,5 +12,3 @@
 #### The following steps are only necessary if your project is a git repo, or if you are using VSCode.
 
  5. If using git, append contents of [.gitignore](.gitignore) to your root folder .gitignore. Create it if it does not exist. If not using folder `vision/`, replace all occurrences of "vision" with your folder name.
-
- 6.  If using VSCode, append contents of [settings.json](settings.json) to `.vscode/settings.json` in your root folder, inside the curly braces. Create it if it does not exist.
