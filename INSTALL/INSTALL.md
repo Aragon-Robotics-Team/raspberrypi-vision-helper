@@ -1,5 +1,17 @@
 # Raspberry Pi Vision Helper Installation
 
+## Raspberry Pi Prep
+
+To make this work, you must have the ssh (Secure Shell) server enabled on your pi. You can do this by creating a blank file called `ssh` in the `boot` fat32 partition of the pi's microsd card. Note that this file cannot have an extention; it must be simply `ssh`.
+
+This is tricky on Windows because explorer hides extentions by default. You can get around this by opening a command prompt with Win + R -> `cmd`, navigating to the partition by typing the drive letter and a colon: `E:`, and creating the file with `copy NUL ssh`.
+
+On Mac or Linux, if you cannot create a file without an extention: open a terminal, navigate to the partition, and create the file with `touch ssh`.
+
+This process may not work sometimes. If this happens, try reflashing the raspberry pi image from [the FRCVision repo](https://github.com/wpilibsuite/FRCVision-pi-gen/releases), and creating the file before the first boot. If you do this, you can back up `frc.json` and `dhcpcd.conf` to keep your camera and static ip settings, respectively.
+
+## Repo Installation
+
  1. Copy entire repo into a new folder in the root of your project. We recommend `vision`. Remove the `.git` folder and the readme files.
 
  2. Append contents of [settings.gradle](settings.gradle) to your root folder settings.gradle. Create it if it does not exist. If not using folder `vision/`, replace all occurrences of "vision" with your folder name.
