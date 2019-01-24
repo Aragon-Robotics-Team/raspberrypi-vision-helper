@@ -35,11 +35,11 @@ deploy {
 		target('rpi') {
 			directory = '/home/pi'
 			failOnMissing = false // Do not fail with error if cannot connect
-			timeout = 10 // Will search for pi maximum 10 seconds
+			timeout = 10          // Will search for pi maximum 10 seconds
 			
 			locations {
 				ssh {
-					address = 'raspberrypi.local' // Change if different hostname or using static IP
+					address = 'frcvision.local'   // May also be raspberrypi.local. Change if different hostname or using static IP
 					user = 'pi'                   // The address, username and password are the defaults
 					password = 'raspberry'
 				}
@@ -64,7 +64,7 @@ deploy {
 		
 		fileArtifact('visionCombinedJar') {
 			file = file("build/libs/${project.name}-all.jar") // Single jar with all dependencies
-			filename = 'uploaded.jar'                         // Rename to upload.jar
+			filename = 'uploaded.jar'                         // Rename to upload.jar for compatibility with web upload runCamera
 			
 			dependsOn('build')                                // Build project before deploy
 			dependsOn('deployVisionRWRpi')
@@ -91,7 +91,7 @@ deploy {
 			postdeploy << { execute '/usr/bin/sudo /usr/bin/killall -9 java'}
 			postdeploy << { execute '/usr/bin/sudo /bin/bash ./runService'}               // Run new code
 			
-			postdeploy << { execute '/usr/bin/sudo /bin/mount -o remount,ro / ' }         // Mount filesystem read-only after upload for safe shutdown
+			postdeploy << { execute '/usr/bin/sudo /bin/mount -o remount,ro / ' }         // Mount filesystem readonly for safe shutdown
 			postdeploy << { execute '/usr/bin/sudo /bin/mount -o remount,ro /boot ' }
 		}
 	}
