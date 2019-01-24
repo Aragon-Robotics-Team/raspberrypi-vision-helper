@@ -24,6 +24,8 @@ dependencies {
     compile name: 'cscore'
     compile name: 'cameraserver'
     compile name: 'opencv-344'
+    compile name: 'wpilibj'
+    compile name: 'wpiHal'
 }
 
 //wrapper { // This was in the sample build.gradle but it does not seem to work in this context
